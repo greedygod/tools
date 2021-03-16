@@ -4,12 +4,14 @@ SETLOCAL ENABLEDELAYEDEXPANSION
 :: 解压缩释放到jmeter的根目录（不是bin）
 :: 执行注册|反注册时，需以管理员身份运行
 
-
 ::  将jmeter注册到系统，可以实现以下功能：
 :: - 双击.jmx文件可打开jmeter并加载脚本
 :: - 右击.jmx文件可选择用后台模式运行并生成测试报告
 :: - 开始-运行中输入jmeter可快速开启jmeter新实例或快速打开最近的jmx
 :: - 包含注册和反注册
+
+
+:begin
 
 ::初始化jmeter路径
 if not exist "%~dp0\bin\jmeter.bat" ( echo runJmeter必须在jmeter主目录下运行！
@@ -69,6 +71,10 @@ if %ERRORLEVEL% equ 2 (
 
 if %ERRORLEVEL% equ 3 (
 	cls
+	net.exe session 1>NUL 2>NUL || ( 
+		echo 需要管理员身份,请在新窗口中重执行
+		goto UACPrompt
+	)
 	echo 1.在注册表关联.jmx文件
 	::默认打开方式为cmd.exe /c "%RUNJMETER% \"%%1\""
 	reg add "HKCR\Software\Microsoft\Command Processor" /v "DisableUNCCheck" /t "REG_DWORD" /d "1" /f
@@ -84,6 +90,11 @@ if %ERRORLEVEL% equ 3 (
 )
 if %ERRORLEVEL% equ 4 ( 
 	cls
+	net.exe session 1>NUL 2>NUL || ( 
+		echo 需要管理员身份,请在新窗口中重执行
+		goto UACPrompt
+	)
+	net.exe session 1>NUL 2>NUL || goto UACPrompt
 	echo 清理.jmx脚本文件关联
 	reg delete "HKCR\.jmx"  /f
 	reg delete "HKCR\jmeterTestFile"  /f
@@ -96,3 +107,9 @@ if %ERRORLEVEL% equ 4 (
 cls
 goto :runOnlyJmeter
 
+:UACPrompt  
+	if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs" 
+    echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\getadmin.vbs" 
+    "%temp%\getadmin.vbs" 
+    exit /B  
