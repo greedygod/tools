@@ -71,17 +71,13 @@ if %ERRORLEVEL% equ 2 (
 
 if %ERRORLEVEL% equ 3 (
 	cls
-	net.exe session 1>NUL 2>NUL || ( 
-		echo 需要管理员身份,请在新窗口中重执行
-		goto UACPrompt
-	)
+	net.exe session 1>NUL 2>NUL || goto UACPrompt
 	echo 1.在注册表关联.jmx文件
 	::默认打开方式为cmd.exe /c "%RUNJMETER% \"%%1\""
 	reg add "HKCR\Software\Microsoft\Command Processor" /v "DisableUNCCheck" /t "REG_DWORD" /d "1" /f
 	reg add "HKCR\.jmx" /ve /d "jmeterTestFile" /f
 	reg add "HKCR\jmeterTestFile\shell\open\command" /ve /d "cmd.exe /c \"%RUNJMETER% \"%%1\"\"" /f
 	reg add "HKCR\jmeterTestFile\shell\以jmeter后台模式执行\command" /ve /d "cmd.exe /c \"%RUNJMETER% \"%%1\"\" --nogui" /f
-	echo 已完成设置，可双击打开jmx文件和右键以后台模式运行
 	echo 2.设置快捷启动关键字jmeter到系统运行菜单
 	reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\jmeter.exe" /ve /d "%JMETER_HOME%\runJmeter.bat" /f
 	reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\jmeter.exe" /v "Path" /d "%JMETER_HOME%" /f
@@ -90,10 +86,6 @@ if %ERRORLEVEL% equ 3 (
 )
 if %ERRORLEVEL% equ 4 ( 
 	cls
-	net.exe session 1>NUL 2>NUL || ( 
-		echo 需要管理员身份,请在新窗口中重执行
-		goto UACPrompt
-	)
 	net.exe session 1>NUL 2>NUL || goto UACPrompt
 	echo 清理.jmx脚本文件关联
 	reg delete "HKCR\.jmx"  /f
@@ -108,6 +100,8 @@ cls
 goto :runOnlyJmeter
 
 :UACPrompt  
+	echo 操作需要管理员权限，请在新窗口中再次执行!
+	choice /t 1 /d y /n >nul
 	if exist "%temp%\getadmin.vbs" ( del "%temp%\getadmin.vbs" )
     echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs" 
     echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\getadmin.vbs" 
